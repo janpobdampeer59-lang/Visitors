@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบแจ้งขออนุญาตเข้า-ออกบริษัทสำหรับบุคคลภายนอก (Visitor Gate Pass System)</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- QR Code Generator Library (สำหรับออก Badge แสดงข้อมูล) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Sarabun', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen text-slate-800 flex flex-col">
+
+    <!-- Header Navigation -->
+    <nav class="bg-blue-900 text-white shadow-lg sticky top-0 z-30 border-b border-blue-800">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-col sm:flex-row justify-between items-center gap-3">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-blue-700 border border-sky-400 flex items-center justify-center shadow">
+                    <i class="fa-solid fa-id-badge text-xl text-sky-200"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg leading-tight tracking-wide">Celeraise(Thailand) Co., Ltd.</h1>
+                    <p class="text-xs text-sky-200">ระบบลงทะเบียนเข้า-ออกบริษัท สำหรับบุคคลภายนอก / ผู้รับเหมา</p>
+                </div>
+            </div>
+            <div class="flex space-x-1.5 bg-blue-950 p-1 rounded-xl border border-blue-800">
+                <button onclick="switchTab('register')" id="tab-btn-register" class="px-3.5 py-1.5 rounded-lg text-sm font-semibold bg-sky-600 text-white shadow transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-pen-to-square text-xs"></i> กรอกขอเข้าพื้นที่
+                </button>
+                <button onclick="switchTab('admin')" id="tab-btn-admin" class="px-3.5 py-1.5 rounded-lg text-sm font-semibold hover:bg-blue-800 text-sky-200 hover:text-white transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-chart-line text-xs"></i> Dashboard ผู้บันทึก
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ขยาย max-w-4xl เป็น max-w-6xl เพื่อให้กล่องกว้างขึ้นเต็มตา -->
+    <main class="flex-1 max-w-6xl w-full mx-auto px-4 py-8">
+
+        <!-- ================= TAB 1: VISITOR REGISTRATION FORM ================= -->
+        <div id="tab-register" class="bg-white rounded-2xl shadow-xl p-6 md:p-10 border-t-4 border-blue-600">
+            <div class="border-b pb-4 mb-6">
+                <h2 class="text-2xl font-bold text-slate-800 flex items-center gap-2.5">
+                    <i class="fa-solid fa-truck-field text-sky-600"></i> กรอกข้อมูลขออนุญาตเข้าพื้นที่ (Visitor Registration)
+                </h2>
+                <p class="text-slate-500 text-sm mt-1">สำหรับบุคคลภายนอก ผู้รับเหมา ผู้ขนส่งสินค้า และผู้มาติดต่อบริษัท</p>
+            </div>
+
+            <form id="regForm" onsubmit="handleRegister(event)" class="space-y-5">
+                
+                <!-- Section 1: ข้อมูลผู้มาติดต่อ -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">ชื่อ-นามสกุล (Name) *</label>
+                        <input type="text" id="regName" required placeholder="เช่น นายสมชาย / Mr.Somchai" class="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none transition">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">บริษัท / ต้นสังกัด (Company / Agency) *</label>
+                        <input type="text" id="regCompany" required placeholder="เช่น บริษัท ABCD จำกัด" class="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none transition">
+                    </div>
+                </div>
+
+                <!-- Section 2: ข้อมูลการติดต่อภายใน -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">เบอร์โทรศัพท์ติดต่อ (Phone Number) *</label>
+                        <input type="tel" id="regPhone" required placeholder="081-XXX-XXXX" class="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none transition">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">ชื่อบุคคลที่ติดต่อ (Contact Person) *</label>
+                        <input type="text" id="regContactPerson" required placeholder="เช่น คุณสมศักดิ์ / Mr.Somsak" class="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none transition">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">แผนกที่ติดต่อภายใน (Internal Contact Dept) *</label>
+                        <select id="regDepartment" required class="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-sky-500 focus:border-sky-500 font-medium text-slate-800 focus:outline-none bg-white">
+                            <option value="" disabled selected>-- เลือกแผนกที่มาติดต่อ --</option>
+                            <option value="ฝ่ายผู้บริหาร">ฝ่ายผู้บริหาร (Management)</option>
+                            <option value="ฝ่ายขาย">ฝ่ายขาย (Sales)</option>
+                            <option value="ฝ่ายจัดซื้อ">ฝ่ายจัดซื้อ (Purchasing)</option>
+                            <option value="ฝ่ายบุคคล">ฝ่ายบุคคล (Human Resources)</option>
+                            <option value="ฝ่าย Admin">ฝ่าย Admin (Administration)</option>
+                            <option value="ฝ่ายบัญชี/การเงิน">ฝ่ายบัญชี/การเงิน (Accounting/Finance)</option>
+                            <option value="ฝ่าย QC/QA">ฝ่าย QC/QA (Quality Control/Quality Assurance)</option>
+                            <option value="ฝ่าย Production">ฝ่าย Production (Production)</option>
+                            <option value="ฝ่าย Development">ฝ่าย Development (Development)</option>
+                            <option value="ฝ่ายคลังสินค้า">ฝ่ายคลังสินค้า (Storage)</option>
+                            <option value="ฝ่าย IT">ฝ่าย IT (Information Technology)</option>
+                            <option value="ฝ่าย Safety">ฝ่าย Safety (Safety)</option>
+                            <option value="ฝ่าย import/Export">ฝ่าย import/Export (Import/Export)</option>
+                            <option value="ฝ่าย Engineering">ฝ่าย Engineering (ENG)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Section 3: ยานพาหนะและพื้นที่ -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">ป้ายทะเบียนรถ (License Plate Number)</label>
+                        <input type="text" id="regVehicle" placeholder="เช่น 1กข-9999 ชลบุรี" class="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none transition">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">พื้นที่ / โซนที่ขอเข้าปฏิบัติงาน (Requested Work Area) *</label>
+                        <select id="regZone" class="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-sky-500 focus:border-sky-500 font-medium text-slate-800 focus:outline-none bg-white">
+                            <option value="อาคารสำนักงาน (Office Building)">อาคารสำนักงาน (Office Building)</option>
+                            <option value="อาคารคลังสินค้า & โลจิสติกส์ (Warehouse)">อาคารคลังสินค้า & โลจิสติกส์ (Warehouse)</option>
+                            <option value="โรงงานผลิต (Factory Zone)">โรงงานผลิต (Factory Zone)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Section 4: วัตถุประสงค์ -->
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">วัตถุประสงค์ในการเข้าพื้นที่ (Objective of Entry) *</label>
+                    <input type="text" id="regPurpose" required placeholder="เช่น ส่งมอบพัสดุ/สินค้า, ซ่อมบำรุงเครื่องจักร, เสนอขายงาน" class="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none transition">
+                </div>
+
+                <!-- Section 5: วันเวลา -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">วันที่เข้าพื้นที่ (Date) *</label>
+                        <input type="date" id="regDate" required class="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none transition font-medium text-slate-800">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">เวลาคาดว่าจะเข้า (Time In) *</label>
+                        <input type="time" id="regStartTime" value="08:30" required class="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none transition font-medium text-slate-800">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">เวลาคาดว่าจะออก (Time Out) *</label>
+                        <input type="time" id="regEndTime" value="17:00" required class="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none transition font-medium text-slate-800">
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full bg-gradient-to-r from-blue-700 via-blue-600 to-sky-500 hover:from-blue-800 hover:to-sky-600 text-white font-bold py-3.5 rounded-xl shadow-lg hover:shadow-sky-200 transition flex items-center justify-center gap-2 mt-4">
+                    <i class="fa-solid fa-floppy-disk"></i> บันทึกข้อมูลบุคคลภายนอกเข้าพื้นที่
+                </button>
+            </form>
+
+            <!-- RESULT DISPLAY: SUCCESS NOTIFICATION -->
+            <div id="qrResult" class="hidden mt-8 p-6 bg-sky-50/70 rounded-2xl border border-sky-200 text-center">
+                <div class="inline-flex items-center gap-2 px-3 py-1 bg-sky-100 text-blue-900 rounded-full text-xs font-bold mb-2">
+                    <i class="fa-solid fa-circle-check text-sky-600"></i> บันทึกข้อมูลสำเร็จเรียบร้อย
+                </div>
+                <h3 class="text-xl font-bold text-slate-800 mb-1">รายการบันทึกข้อมูลบุคคลภายนอก</h3>
+                <p class="text-xs text-slate-500 mb-4">ข้อมูลถูกบันทึกเข้าระบบทะเบียนเรียบร้อยแล้ว</p>
+
+                <div class="text-left max-w-md mx-auto bg-white p-4 rounded-xl border border-sky-100 text-xs space-y-1.5 text-slate-600 shadow-sm">
+                    <div class="flex justify-between border-b pb-1.5 mb-1.5">
+                        <span class="text-slate-400">Visitor Pass ID:</span>
+                        <span id="resID" class="font-mono font-bold text-blue-600 text-sm"></span>
+                    </div>
+                    <p><strong>ชื่อ-นามสกุล:</strong> <span id="resName" class="text-slate-800 font-semibold"></span></p>
+                    <p><strong>บริษัท/สังกัด:</strong> <span id="resCompany" class="font-bold text-slate-800"></span></p>
+                    <p><strong>ผู้มาติดต่อ:</strong> <span id="resContactPerson" class="text-blue-800 font-medium"></span></p>
+                    <p><strong>แผนกที่ติดต่อ:</strong> <span id="resDepartment" class="font-bold text-sky-700"></span></p>
+                    <p><strong>ป้ายทะเบียนรถ:</strong> <span id="resVehicle" class="font-bold text-slate-800"></span></p>
+                    <p><strong>วัตถุประสงค์:</strong> <span id="resPurpose"></span></p>
+                    <p><strong>พื้นที่อนุญาต:</strong> <span id="resZone" class="font-semibold text-emerald-700"></span></p>
+                    <p><strong>กำหนดการเข้า-ออก:</strong> <span id="resTime" class="font-bold text-sky-800"></span></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= TAB 2: ADMIN & DASHBOARD ================= -->
+        <div id="tab-admin" class="hidden bg-white rounded-2xl shadow-xl p-6 md:p-10 border-t-4 border-blue-600">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 border-b pb-4 mb-6">
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-chart-pie text-sky-600"></i> สรุปรายงานบุคคลภายนอกเข้าพื้นที่ (Visitor Log)
+                    </h2>
+                    <p class="text-slate-500 text-sm">รายชื่อบุคคลภายนอก/ผู้รับเหมาที่บันทึกเข้าปฏิบัติงานในบริษัท</p>
+                </div>
+                <div class="flex items-center gap-2 flex-wrap">
+                    <button onclick="exportToCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 shadow">
+                        <i class="fa-solid fa-file-excel"></i> ส่งออก Excel (CSV)
+                    </button>
+                    <button onclick="clearAllData()" class="bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-trash-can"></i> ล้างข้อมูลทั้งหมด
+                    </button>
+                </div>
+            </div>
+
+            <!-- KPI Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-center">
+                    <p class="text-xs text-slate-600 font-semibold uppercase">บันทึกเข้าพื้นที่ทั้งหมด</p>
+                    <p id="kpiTotal" class="text-3xl font-extrabold text-slate-900 mt-1">0</p>
+                </div>
+                <div class="bg-sky-50 border border-sky-200 rounded-2xl p-4 text-center">
+                    <p class="text-xs text-sky-700 font-semibold uppercase">บันทึกวันนี้</p>
+                    <p id="kpiToday" class="text-3xl font-extrabold text-blue-900 mt-1">0</p>
+                </div>
+            </div>
+
+            <!-- Search Filter Bar -->
+            <div class="mb-3 flex flex-col md:flex-row justify-between items-center gap-2">
+                <div class="relative w-full md:w-80">
+                    <i class="fa-solid fa-search absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+                    <input type="text" id="adminSearchInput" oninput="renderAdminDashboard()" placeholder="ค้นหา ชื่อ, บริษัท, แผนก..." class="w-full pl-8 pr-3 py-1.5 border rounded-xl text-xs focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                </div>
+                <span id="recordCountText" class="text-xs text-slate-500"></span>
+            </div>
+
+            <!-- Table of Visitors -->
+            <div class="overflow-x-auto border rounded-xl">
+                <table class="w-full text-left text-sm text-slate-600 border-collapse">
+                    <thead class="bg-slate-100 text-slate-700 font-semibold uppercase text-xs">
+                        <tr>
+                            <th class="p-3 border-b">ID</th>
+                            <th class="p-3 border-b">ชื่อ-นามสกุล</th>
+                            <th class="p-3 border-b">บริษัท/สังกัด</th>
+                            <th class="p-3 border-b">ติดต่อ (คุณ/แผนก)</th>
+                            <th class="p-3 border-b">ป้ายทะเบียนรถ</th>
+                            <th class="p-3 border-b">โซนเข้าพื้นที่</th>
+                            <th class="p-3 border-b">วันที่ / เวลา</th>
+                            <th class="p-3 border-b text-center">จัดการ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="attendanceTable"></tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="text-center py-4 text-xs text-slate-400 border-t bg-white mt-auto">
+        Visitor Gate Pass System &copy; 2026
+    </footer>
+
+    <script>
+        const GOOGLE_SCRIPT_URL = "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL";
+        const STORAGE_KEY = 'visitor_pass_db_nocr_v2';
+
+        function loadDB() {
+            try {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                return saved ? JSON.parse(saved) : [];
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function saveDB() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
+            } catch (e) {}
+        }
+
+        let db = loadDB();
+        let lastCreatedPass = null;
+
+        function switchTab(tabName) {
+            ['register', 'admin'].forEach(tab => {
+                document.getElementById('tab-' + tab).classList.add('hidden');
+                const btn = document.getElementById('tab-btn-' + tab);
+                btn.classList.remove('bg-sky-600', 'text-white', 'shadow');
+                btn.classList.add('text-sky-200');
+            });
+
+            document.getElementById('tab-' + tabName).classList.remove('hidden');
+            const activeBtn = document.getElementById('tab-btn-' + tabName);
+            activeBtn.classList.add('bg-sky-600', 'text-white', 'shadow');
+            activeBtn.classList.remove('text-sky-200');
+
+            if (tabName === 'admin') renderAdminDashboard();
+        }
+
+        function generateUniqueID() {
+            return "VST-" + Math.floor(1000 + Math.random() * 9000);
+        }
+
+        function handleRegister(e) {
+            e.preventDefault();
+            const name = document.getElementById('regName').value.trim();
+            const company = document.getElementById('regCompany').value.trim();
+            const phone = document.getElementById('regPhone').value.trim();
+            const contactPerson = document.getElementById('regContactPerson').value.trim();
+            const department = document.getElementById('regDepartment').value;
+            const vehicle = document.getElementById('regVehicle').value.trim() || '-';
+            const purpose = document.getElementById('regPurpose').value.trim();
+            const gateDate = document.getElementById('regDate').value;
+            const startTime = document.getElementById('regStartTime').value;
+            const endTime = document.getElementById('regEndTime').value;
+            const zone = document.getElementById('regZone').value;
+
+            if (startTime && endTime && startTime >= endTime) {
+                alert("⚠️ เวลาคาดว่าจะเข้า ต้องเกิดก่อนเวลาคาดว่าจะออก");
+                return;
+            }
+
+            const newID = generateUniqueID();
+            const passRecord = {
+                id: newID,
+                name: name,
+                company: company,
+                phone: phone,
+                contactPerson: contactPerson,
+                department: department,
+                vehicle: vehicle,
+                purpose: purpose,
+                date: gateDate,
+                startTime: startTime,
+                endTime: endTime,
+                zone: zone,
+                timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19)
+            };
+
+            db.unshift(passRecord);
+            saveDB();
+            lastCreatedPass = passRecord;
+
+            document.getElementById('resID').innerText = newID;
+            document.getElementById('resName').innerText = name;
+            document.getElementById('resCompany').innerText = company;
+            document.getElementById('resContactPerson').innerText = contactPerson;
+            document.getElementById('resDepartment').innerText = department;
+            document.getElementById('resVehicle').innerText = vehicle;
+            document.getElementById('resPurpose').innerText = purpose;
+            document.getElementById('resZone').innerText = zone;
+            document.getElementById('resTime').innerText = `${gateDate} (${startTime} - ${endTime} น.)`;
+
+            document.getElementById('qrResult').classList.remove('hidden');
+
+            sendDataToGoogleSheet({
+                action: "register_visitor",
+                ...passRecord
+            });
+
+            document.getElementById('regForm').reset();
+            document.getElementById('regDate').value = gateDate || new Date().toISOString().split('T')[0];
+            document.getElementById('regStartTime').value = "08:30";
+            document.getElementById('regEndTime').value = "17:00";
+
+            renderAdminDashboard();
+        }
+
+        function deleteAttendee(id) {
+            const item = db.find(u => u.id === id);
+            if (!item) return;
+            if (confirm(`ยืนยันการลบรายการของ: ${item.name} (${item.id})?`)) {
+                db = db.filter(u => u.id !== id);
+                saveDB();
+                renderAdminDashboard();
+            }
+        }
+
+        function exportToCSV() {
+            if (db.length === 0) {
+                alert("ยังไม่มีข้อมูลสำหรับส่งออก");
+                return;
+            }
+
+            const headers = ["Visitor ID", "ชื่อ-นามสกุล", "บริษัท/สังกัด", "เบอร์โทร", "บุคคลผู้รับการติดต่อ", "แผนกที่ติดต่อ", "ป้ายทะเบียนรถ", "วัตถุประสงค์", "วันที่ขอเข้า", "เวลาเข้า", "เวลาออก", "โซนที่ขอเข้า", "เวลาบันทึกข้อมูล"];
+            const rows = db.map(u => [
+                u.id,
+                `"${(u.name || '').replace(/"/g, '""')}"`,
+                `"${(u.company || '').replace(/"/g, '""')}"`,
+                `"${(u.phone || '').replace(/"/g, '""')}"`,
+                `"${(u.contactPerson || '').replace(/"/g, '""')}"`,
+                `"${(u.department || '').replace(/"/g, '""')}"`,
+                `"${(u.vehicle || '').replace(/"/g, '""')}"`,
+                `"${(u.purpose || '').replace(/"/g, '""')}"`,
+                `"${u.date || '-'}"`,
+                `"${u.startTime || '-'}"`,
+                `"${u.endTime || '-'}"`,
+                `"${(u.zone || '').replace(/"/g, '""')}"`,
+                `"${u.timestamp || '-'}"`
+            ]);
+
+            let csvContent = "\uFEFF" + headers.join(",") + "\n";
+            rows.forEach(rowArray => {
+                csvContent += rowArray.join(",") + "\n";
+            });
+
+            const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            const dateStr = new Date().toISOString().substring(0, 10);
+            link.setAttribute("href", url);
+            link.setAttribute("download", `Visitor_Log_${dateStr}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function renderAdminDashboard() {
+            const tbody = document.getElementById('attendanceTable');
+            if (!tbody) return;
+
+            const searchKeyword = (document.getElementById('adminSearchInput')?.value || '').trim().toLowerCase();
+            let filtered = db;
+            if (searchKeyword) {
+                filtered = db.filter(item => 
+                    (item.id && item.id.toLowerCase().includes(searchKeyword)) ||
+                    (item.name && item.name.toLowerCase().includes(searchKeyword)) ||
+                    (item.company && item.company.toLowerCase().includes(searchKeyword)) ||
+                    (item.contactPerson && item.contactPerson.toLowerCase().includes(searchKeyword)) ||
+                    (item.department && item.department.toLowerCase().includes(searchKeyword)) ||
+                    (item.vehicle && item.vehicle.toLowerCase().includes(searchKeyword)) ||
+                    (item.zone && item.zone.toLowerCase().includes(searchKeyword))
+                );
+            }
+
+            let rowsHtml = '';
+            const todayStr = new Date().toISOString().split('T')[0];
+            let todayCount = 0;
+
+            db.forEach(item => {
+                if (item.date === todayStr) todayCount++;
+            });
+
+            filtered.forEach(item => {
+                rowsHtml += `
+                    <tr class="border-b hover:bg-slate-50 transition text-xs">
+                        <td class="p-3 font-mono text-blue-600 font-bold">${escapeHtml(item.id)}</td>
+                        <td class="p-3 font-medium text-slate-800">${escapeHtml(item.name)}</td>
+                        <td class="p-3 font-semibold text-slate-700">${escapeHtml(item.company)}</td>
+                        <td class="p-3 text-blue-800 font-medium">${escapeHtml(item.contactPerson)}<br><span class="text-sky-700 font-bold">[${escapeHtml(item.department)}]</span></td>
+                        <td class="p-3 font-mono font-semibold">${escapeHtml(item.vehicle)}</td>
+                        <td class="p-3 text-emerald-800">${escapeHtml(item.zone)}</td>
+                        <td class="p-3 font-mono">${escapeHtml(item.date)}<br><span class="text-slate-400">${escapeHtml(item.startTime)} - ${escapeHtml(item.endTime)} น.</span></td>
+                        <td class="p-3 text-center">
+                            <button onclick="deleteAttendee('${item.id}')" title="ลบรายการ" class="p-1.5 rounded-lg border text-rose-600 hover:bg-rose-50 border-rose-200 text-xs transition">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            if (filtered.length === 0) {
+                rowsHtml = `<tr><td colspan="8" class="p-6 text-center text-slate-400 font-medium">ไม่พบข้อมูลประวัติการบันทึก</td></tr>`;
+            }
+
+            tbody.innerHTML = rowsHtml;
+            document.getElementById('kpiTotal').innerText = db.length;
+            document.getElementById('kpiToday').innerText = todayCount;
+
+            const countText = document.getElementById('recordCountText');
+            if (countText) {
+                countText.innerText = searchKeyword ? `แสดง ${filtered.length} จากทั้งหมด ${db.length} รายการ` : `ทั้งหมด ${db.length} รายการ`;
+            }
+        }
+
+        function escapeHtml(str) {
+            if (str === null || str === undefined) return '';
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        function clearAllData() {
+            if (confirm("⚠️ คุณแน่ใจหรือไม่ว่าต้องการล้างข้อมูลประวัติทั้งหมดในเครื่องนี้?")) {
+                db = [];
+                saveDB();
+                renderAdminDashboard();
+                alert("ล้างข้อมูลเรียบร้อยแล้ว");
+            }
+        }
+
+        try {
+            const today = new Date().toISOString().split('T')[0];
+            const dateInput = document.getElementById('regDate');
+            if (dateInput && !dateInput.value) {
+                dateInput.value = today;
+            }
+        } catch(e) {}
+
+        renderAdminDashboard();
+
+        function sendDataToGoogleSheet(dataPayload) {
+            if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL === "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL") {
+                return;
+            }
+
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: "POST",
+                mode: "no-cors",
+                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                body: JSON.stringify(dataPayload)
+            }).catch(error => console.error("Error:", error));
+        }
+    </script>
+</body>
+</html>
